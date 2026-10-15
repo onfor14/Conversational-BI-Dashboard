@@ -72,11 +72,20 @@ with st.sidebar:
     uploaded = st.file_uploader("Upload your CSV", type=["csv"], help="Your CSV is processed in this app session. If Gemini is enabled, the schema and category metadata are sent to Google's API, not the raw rows.")
     st.caption("No CSV? A sample retail dataset is loaded automatically.")
     st.divider()
-    key_default = os.getenv("GEMINI_API_KEY", "")
-    api_key = st.text_input("Gemini API key", value=key_default, type="password", help="Get a key from Google AI Studio. The key is not saved by the app.")
-    model = st.text_input("Gemini model", value=os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite"))
-    st.caption("When Gemini is unavailable, a local rule-based planner keeps the demo usable.")
-    st.divider()
+    try:
+        api_key = st.secrets.get("GEMINI_API_KEY", "")
+    except (FileNotFoundError, KeyError):
+        api_key = os.getenv("GEMINI_API_KEY", "")
+    try:
+        model = st.secrets.get("GEMINI_MODEL", os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite"))
+    except (FileNotFoundError, KeyError):
+        model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
+    if api_key:
+        st.sidebar.success("Gemini API configured")
+    else:
+        st.sidebar.warning("Gemini API key is not configured")
+    st.sidebar.caption("When Gemini is unavailable, a local rule-based planner keeps the demo usable.")
+    st.sidebar.divider()
     st.markdown("### 🧭 How it works")
     st.markdown("**1. Interpret** natural language into a constrained JSON plan.\n\n**2. Validate** fields and filters against the dataset schema.\n\n**3. Compute** with pandas—no generated code or SQL is executed.\n\n**4. Visualise** results in interactive Plotly charts.")
 
